@@ -1,11 +1,12 @@
 const express = require("express");
 const { MongoClient, ObjectId } = require("mongodb");
+const cors = require("cors");
 
 // const url = "mongodb://localhost:27017";
 // const url = "mongodb://127.0.0.1:27017";
-const url = "mongodb://127.0.0.1:27017";
-// const url = "mongodb+srv://admin:v8h7sjoNkQixeoNz@cluster0.xsfw5tb.mongodb.net";
-const dbName = "jornada-backend-ago-23";
+const url = "mongodb+srv://admin:v8h7sjoNkQixeoNz@cluster0.xsfw5tb.mongodb.net";
+// const url = "mongodb+srv://admin:V90K7ehx2krw7OlM@cluster0.gbnr4oi.mongodb.net";
+const dbName = "jornada-backend-agosto-23";
 const client = new MongoClient(url);
 
 async function main() {
@@ -17,6 +18,9 @@ async function main() {
   const collection = db.collection("herois");
 
   const app = express();
+
+  // Habilitar o CORS
+  app.use(cors());
 
   // Habilitamos o processamento de JSON
   app.use(express.json());
@@ -48,15 +52,11 @@ async function main() {
     // Extrai o nome do Body da Request (Corpo da Requisição)
     const item = req.body;
 
-    // Inserir o item na lista
-    // lista.push(item);
-
-    //Inserir o item na collection
-
+    // Inserir o item na collection
     await collection.insertOne(item);
 
     // Enviamos uma resposta de sucesso
-    res.send(item);
+    res.status(201).send(item);
   });
 
   // Read By Id -> [GET] /herois/:id
@@ -64,8 +64,8 @@ async function main() {
     // Pegamos o parâmetro de rota ID
     const id = req.params.id;
 
-    // Pegamos a informação da lista
-    const item =  await collection.findOne({
+    // Pegamos a informação da collection
+    const item = await collection.findOne({
       _id: new ObjectId(id),
     });
 
@@ -74,23 +74,17 @@ async function main() {
   });
 
   // Update -> [PUT] /herois/:id
-  app.put("/herois/:id", function (req, res) {
+  app.put("/herois/:id", async function (req, res) {
     // Pegamos o parâmetro de rota ID
     const id = req.params.id;
 
     // Extrai o nome do Body da Request (Corpo da Requisição)
     const item = req.body;
 
-collection.updateOne(
-{_id: new ObjectId(id) },
-{$set: item },
+    // Atualizamos a informação na collection
+    await collection.updateOne({ _id: new ObjectId(id) }, { $set: item });
 
-);
-
-    // Atualizamos a informação na lista de registros
-    lista[id] = item;
-
-    res.send("Item editado com sucesso!");
+    res.send(item);
   });
 
   // Delete -> [DELETE] /herois/:id
@@ -98,14 +92,13 @@ collection.updateOne(
     // Pegamos o parâmetro de rota ID
     const id = req.params.id;
 
-    // Excluir o item da lista
-    delete lista[id];
+    // Excluir o item da collection
+    await collection.deleteOne({ _id: new ObjectId(id) });
 
-    await collection.deleteOne({ _id: new ObjectId});
-    res.send("Item excluído com sucesso!");
+    res.status(204).send();
   });
 
-  app.listen(process.env.Port || 3000);
+  app.listen(process.env.PORT || 3000);
 }
 
 main();
